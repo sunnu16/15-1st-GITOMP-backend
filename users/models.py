@@ -1,6 +1,6 @@
 from django.db import models
 
-class Users(models.Model):
+class User(models.Model):
     
     nickname = models.CharField(max_length = 16)
     email    = models.EmailField()

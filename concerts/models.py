@@ -47,9 +47,9 @@ class Concert(models.Model):
 
 class ConcertTicketingSite(models.Model):
     
-    concert = models.ForeignKey(Concert, on_delete=models.CASCADE,null=True)
+    concert        = models.ForeignKey(Concert,on_delete=models.CASCADE,null=True)
     ticketing_site = models.ForeignKey(TicketingSite,on_delete=models.CASCADE,null=True)
-    url = models.URLField(max_length=126)
+    url            = models.URLField(max_length=126)
 
     class Meta:
         db_table = "concerts_ticketing_sites"
@@ -57,8 +57,8 @@ class ConcertTicketingSite(models.Model):
 class ConcertSeat(models.Model):
 
     concert = models.ForeignKey(Concert,on_delete=models.CASCADE,null=True)
-    seat = models.ForeignKey(Seat,on_delete=models.CASCADE,null=True)
-    price = models.IntegerField()
+    seat    = models.ForeignKey(Seat,on_delete=models.CASCADE,null=True)
+    price   = models.IntegerField()
 
     class Meta:
         db_table = "concerts_seats" 

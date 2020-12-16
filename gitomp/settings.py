@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'users',
     'concerts',
     'albums',
+    'boards',
 ]
 
 MIDDLEWARE = [
