@@ -1,14 +1,12 @@
 from django.db import models
 
 class Location(models.Model):
-
     name = models.CharField(max_length=64)
 
     class Meta:
         db_table = "locations"
 
 class Host(models.Model):
-
     name    = models.CharField(max_length=32)
     contact = models.CharField(max_length=16)
 
@@ -16,21 +14,18 @@ class Host(models.Model):
         db_table = "hosts"
 
 class TicketingSite(models.Model):
-    
     name = models.CharField(max_length=16)
 
     class Meta:
         db_table = "ticketing_sites"
 
 class Seat(models.Model):
-
     name = models.CharField(max_length=16)
     
     class Meta:
         db_table = "seats"
 
 class Concert(models.Model):
-
     title            = models.CharField(max_length=64)
     date_performance = models.DateTimeField()
     location         = models.ForeignKey(Location,on_delete=models.SET_NULL,null=True)
@@ -46,7 +41,6 @@ class Concert(models.Model):
         db_table = "concerts"
 
 class ConcertTicketingSite(models.Model):
-    
     concert        = models.ForeignKey(Concert,on_delete=models.CASCADE,null=True)
     ticketing_site = models.ForeignKey(TicketingSite,on_delete=models.CASCADE,null=True)
     url            = models.URLField(max_length=126)
@@ -55,14 +49,9 @@ class ConcertTicketingSite(models.Model):
         db_table = "concerts_ticketing_sites"
 
 class ConcertSeat(models.Model):
-
     concert = models.ForeignKey(Concert,on_delete=models.CASCADE,null=True)
     seat    = models.ForeignKey(Seat,on_delete=models.CASCADE,null=True)
     price   = models.IntegerField()
 
     class Meta:
         db_table = "concerts_seats" 
-
-
-
-
