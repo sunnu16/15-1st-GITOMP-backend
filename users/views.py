@@ -55,10 +55,10 @@ class SigninView(View):
             
             assert bcrypt.checkpw(data['password'].encode(),user.password.encode())
             
-            access_token = jwt.encode({"id":user.id,"nickname":user.nickname},
-                                      SECRET_KEY,algorithm=JWT_ALGORITHM)
+            access_token = jwt.encode({"id":user.id},SECRET_KEY,algorithm=JWT_ALGORITHM)
             
             return JsonResponse({'MESSAGE':"SUCCESS",
+                                 "NICKNAME":user.nickname,
                                  "TOKEN":access_token.decode()},status=201)
 
         except KeyError:
