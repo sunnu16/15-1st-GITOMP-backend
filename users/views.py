@@ -17,11 +17,14 @@ class SignupView(View):
         try:
             data = json.loads(request.body)
 
-            assert is_valid(data['email'],EMAIL_REGEX),"INVALID_EMAIL_FORMAT"
-            assert is_valid(data['password'],PW_REGEX),"INVALID_PW_FORMAT"
-            assert is_valid(data['nickname'],NICKNAME_REGEX),"INVALID_NICKNAME_FORMAT"
-
-            hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'),bcrypt.gensalt())
+            if not is_valid(data['email'],EMAIL_REGEX):
+                return JsonResponse({"MESSAGE":"INVALID_EMAIL_FORMAT"},status=400)
+            
+            if not is_valid(data['password'],PW_REGEX):
+                return JsonResponse({"MESSAGE":"INVALID_PW_FORMAT"},status=400)
+                
+            if not is_valid(data['nickname'],NICKNAME_REGEX):
+                return JsonResponse({"MESSAGE":"INVALID_NICKNAME_FORMAT"},status=400)
         
             if User.objects.filter(
                 Q(email    = data['email'])|
@@ -30,6 +33,8 @@ class SignupView(View):
             
                 return JsonResponse({"MESSAGE":"USER_ALREADY_EXISTS"},status=400)
                 
+            hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'),bcrypt.gensalt())
+            
             User.objects.create(
                 nickname = data['nickname'],
                 email    = data["email"],
@@ -41,9 +46,6 @@ class SignupView(View):
         except KeyError:
             return JsonResponse({'MESSAGE':"KEY_ERROR"},status=400)
         
-        except AssertionError as e:
-            return JsonResponse({"MESSAGE":f"{e}"},status=400)
-
         except json.JSONDecodeError:
             return JsonResponse({"MESSAGE":"INVALID_DATA"},status=400)
     
@@ -52,7 +54,10 @@ class SigninView(View):
         try:
             data = json.loads(request.body)
             user = User.objects.get(email=data['email'])
-            assert bcrypt.checkpw(data['password'].encode(),user.password.encode())
+            
+            if not bcrypt.checkpw(data['password'].encode(),user.password.encode()):
+                return JsonResponse({"MESSAGE":"INVALID_USER"},status=400) 
+            
             access_token = jwt.encode({"id":user.id},SECRET_KEY,algorithm=JWT_ALGORITHM)
             
             return JsonResponse({
@@ -64,7 +69,7 @@ class SigninView(View):
         except KeyError:
             return JsonResponse({'MESSAGE':"KEY_ERROR"},status=400)
 
-        except (User.DoesNotExist, AssertionError):
+        except User.DoesNotExist:
             return JsonResponse({'MESSAGE':"INVALID_USER"},status=401)
 
         except json.JSONDecodeError:
