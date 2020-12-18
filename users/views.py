@@ -26,10 +26,7 @@ class SignupView(View):
             if not is_valid(data['nickname'],NICKNAME_REGEX):
                 return JsonResponse({"MESSAGE":"INVALID_NICKNAME_FORMAT"},status=400)
         
-            if User.objects.filter(
-                Q(email    = data['email'])|
-                Q(nickname = data['nickname'])
-                ).exists():
+            if User.objects.filter(Q(email=data['email'])|Q(nickname=data['nickname'])).exists():
             
                 return JsonResponse({"MESSAGE":"USER_ALREADY_EXISTS"},status=400)
                 
@@ -60,11 +57,7 @@ class SigninView(View):
             
             access_token = jwt.encode({"id":user.id},SECRET_KEY,algorithm=JWT_ALGORITHM)
             
-            return JsonResponse({
-                'MESSAGE'  : "SUCCESS",
-                "NICKNAME" : user.nickname,
-                "TOKEN"    : access_token.decode()
-                },status=201)
+            return JsonResponse({"NICKNAME":user.nickname,"ACCESS_TOKEN":access_token.decode()},status=200)
 
         except KeyError:
             return JsonResponse({'MESSAGE':"KEY_ERROR"},status=400)
