@@ -46,11 +46,9 @@ class SignupView(View):
 
         except json.JSONDecodeError:
             return JsonResponse({"MESSAGE":"INVALID_DATA"},status=400)
-
-
+    
 class SigninView(View):
     def post(self, request):
-        
         try:
             data = json.loads(request.body)
             user = User.objects.get(email=data['email'])
