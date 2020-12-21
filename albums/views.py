@@ -16,7 +16,7 @@ class ListView(View):
         page        = int(request.GET.get('page',1))
         ALBUM_COUNT = 10
         limit       = ALBUM_COUNT*page
-        offset      = limit - ALBUM_COUNT
+        offset      = limit-ALBUM_COUNT
 
         if request.GET.get('genre'):
             filter_set['genre__name'] = request.GET['genre']
@@ -26,18 +26,22 @@ class ListView(View):
 
         search_string = request.GET.get('search')
         search_key    = request.GET.get('search_key')
-                
+        search_option = {
+            0 : Q(title__icontains=search_string) | Q(description__icontains=search_string),
+            1 : Q(title__icontains=search_string),
+            2 : Q(description__icontains=search_string)
+        }
+
+
         if search_string:
-            if int(search_key) == 0:
-                query &= Q(title__icontains=search_string) | Q(description__icontains=search_string)
-            elif int(search_key) == 1:
-                query &= Q(title__icontains=search_string)
-            else:
-                query &= Q(description__icontains=search_string)
+            if not search_key:
+                search_key = 0
+            query &= search_option[search_key]
+            
         
         albums = Album.objects.select_related('genre','release_type').prefetch_related('artist').filter(query,**filter_set)
         
-        if not len(albums):
+        if not albums:
             return JsonResponse({'MESSAGE':"PAGE_NOT_FOUND"}, status=404)
         
         page_count = math.ceil(albums.count()/ALBUM_COUNT)  
@@ -46,11 +50,12 @@ class ListView(View):
             "page" : page,
             "page_count" : page_count,
             "albums": [{
-                "album_id" : album.id,
-                "title" : album.title,
-                "artist" : [ artist.name for artist in album.artist.all()],
-                "release_type": album.release_type.name,
-                "release_date": album.release_date
+                "album_id"     : album.id,
+                "title"        : album.title,
+                "artist"       : [ artist.name for artist in album.artist.all()],
+                "release_type" : album.release_type.name,
+                "release_date" : album.release_date,
+                "image_url"    : album.image_url
                 
             } for album in albums[offset:limit]]}   
         
