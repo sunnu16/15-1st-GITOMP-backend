@@ -32,7 +32,6 @@ class AlbumListView(View):
             2 : Q(description__icontains=search_string)
         }
 
-
         if search_string:
             if not search_key:
                 search_key = 0
@@ -70,8 +69,8 @@ class AlbumDetailView(View):
             
             playlinks = album.play_link.prefetch_related("albumplaylink_set","albumplaylink_set_album")
 
-            previous_album  = Album.objects.prefetch_related('artist').filter(id__lt=album_pk).order_by('id').first()
-            next_album      = Album.objects.prefetch_related('artist').filter(id__gt=album.pk).order_by('id').first()
+            previous_album  = Album.objects.prefetch_related('artist').filter(id__lt=album_pk).order_by('id').last()
+            next_album      = Album.objects.prefetch_related('artist').filter(id__gt=album_pk).order_by('id').first()
             data = {
                 "id"                 : album.id,
                 "title"              : album.title,
@@ -85,20 +84,20 @@ class AlbumDetailView(View):
                 "song"               : [song.name for song in album.song.all()],
                 "playlinks"          : {
                     playlink.name : album_playlink.url for (playlink,album_playlink) in zip(album.play_link.all(),album.albumplaylink_set.all())   
-                }
+                },    
             }
-            
+
             if previous_album:
-                data['previous_album'] = {
+                data["previous_album"] = {
                     "id"     : previous_album.id,
                     "title"  : previous_album.title,
                     "artist" : [artist.name for artist in previous_album.artist.all()]
                 }
 
             if next_album:
-                data['next_album'] = {           
+                data["next_album"] = {           
                     "id"     : next_album.id,
-                    "name"   : next_album.title,
+                    "title"  : next_album.title,
                     "artist" : [artist.name for artist in next_album.artist.all()]
                 }
 
