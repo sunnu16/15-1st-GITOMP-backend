@@ -8,7 +8,7 @@ from django.db.models import Q
 from albums.models    import (Album, Genre, Artist, ReleaseType,
                               PlayLink, AlbumPlayLink)
 
-class ListView(View): 
+class AlbumListView(View): 
     def get(self,request):
         
         query       = Q()
@@ -61,12 +61,14 @@ class ListView(View):
         
         return JsonResponse(data,status=200)
         
-class DetailPageView(View):
+class AlbumDetailView(View):
     def get(self,request,album_pk):
         try:
             album = Album.objects.select_related(
                 'genre','release_type').prefetch_related(
-                'artist','song','play_link').get(id=album_pk)
+                'artist','song','play_link','albumplaylink_set').get(id=album_pk)
+            
+            playlinks = album.play_link.prefetch_related("albumplaylink_set","albumplaylink_set_album")
 
             previous_album  = Album.objects.prefetch_related('artist').filter(id__lt=album_pk).order_by('id').first()
             next_album      = Album.objects.prefetch_related('artist').filter(id__gt=album.pk).order_by('id').first()
@@ -83,8 +85,8 @@ class DetailPageView(View):
                 "song"               : [song.name for song in album.song.all()],
                 "playlinks"          : [{
                     "link_name" : playlink.name,
-                    "link_url"  : AlbumPlayLink.objects.get(album=album.id,play_link=playlink.id).url
-                }for playlink in album.play_link.all()]
+                    "link"      : album_playlink.url
+                }for (playlink,album_playlink) in zip(album.play_link.all(),album.albumplaylink_set.all())]
             }
 
             if previous_album:
@@ -106,7 +108,7 @@ class DetailPageView(View):
         except Album.DoesNotExist:
             return JsonResponse({"MESSAGE":"ALBUM_NOT_FOUND"},status=404)
 
-class MainAlbumsView(View):
+class AlbumMainView(View):
     def get(self, request):
         ALBUM_COUNT = 4
         genres = Genre.objects.prefetch_related('album_set','album_set__release_type','album_set__artist').all()

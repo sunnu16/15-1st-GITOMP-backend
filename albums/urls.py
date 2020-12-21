@@ -1,8 +1,8 @@
 from django.urls import path
-from albums.views  import ListView, DetailPageView, MainAlbumsView
+from albums.views  import AlbumListView, AlbumDetailView, AlbumMainView
 
 urlpatterns = [
-    path('',ListView.as_view()),
-    path('/<int:album_pk>',DetailPageView.as_view()),
-    path('/main-page', MainAlbumsView.as_view()),
+    path('',AlbumListView.as_view()),
+    path('/<int:album_pk>',AlbumDetailView.as_view()),
+    path('/main-page', AlbumMainView.as_view()),
 ]
