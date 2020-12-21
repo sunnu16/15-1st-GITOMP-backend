@@ -83,12 +83,11 @@ class AlbumDetailView(View):
                 "release_type"       : album.release_type.name,
                 "genre"              : album.genre.name,
                 "song"               : [song.name for song in album.song.all()],
-                "playlinks"          : [{
-                    "link_name" : playlink.name,
-                    "link"      : album_playlink.url
-                }for (playlink,album_playlink) in zip(album.play_link.all(),album.albumplaylink_set.all())]
+                "playlinks"          : {
+                    playlink.name : album_playlink.url for (playlink,album_playlink) in zip(album.play_link.all(),album.albumplaylink_set.all())   
+                }
             }
-
+            
             if previous_album:
                 data['previous_album'] = {
                     "id"     : previous_album.id,
