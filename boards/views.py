@@ -1,13 +1,14 @@
 import json
 import math
+import datetime
 
 from django.http      import JsonResponse,HttpResponse
 from django.views     import View
-from boards.models    import Board,BoardCategory,Comment
-from users.models     import User
 from django.db.models import Q
 
 from users.utils      import LoginConfirm
+from users.models     import User
+from boards.models    import Board,BoardCategory,Comment
 
 class BoardView(View):
     def get(self, request):
@@ -139,17 +140,17 @@ class BoardDetailView(View):
             return JsonResponse({"MESSAGE": "INVALID_DATA"},status=400)
     
     @LoginConfirm
-    def patch(self, request, board_pk):
-        
+    def patch(self, request, board_pk):       
         try:
-            data = json.loads(request.body)
+            data  = json.loads(request.body)
             board = Board.objects.get(id=board_pk)
             
             if not board.author.id == request.user.id:
                 return JsonResponse({"MESSAGE":"UNAUTHORIZED"},status=403)
 
-            board.title = data['title']
-            board.content = data['content']
+            board.title      = data['title']
+            board.content    = data['content']
+            board.updated_at = datetime.datetime.now()
             board.save()
         
             return HttpResponse(status=200)
@@ -201,8 +202,7 @@ class CommentView(View):
     @LoginConfirm
     def patch(self, request, board_pk, comment_pk):
         try:
-            data = json.loads(request.body)
-            
+            data    = json.loads(request.body)
             comment = Comment.objects.get(id=comment_pk,board=board_pk)
             
             if not comment.author.id == request.user.id:
