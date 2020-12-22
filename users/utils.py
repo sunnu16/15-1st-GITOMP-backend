@@ -31,6 +31,6 @@ def LoginConfirm(original_function):
         except jwt.DecodeError:
             return JsonResponse({'message':'INVALID_DATA'}, status=401)
 
-        except Users.DoesNotExist:
+        except User.DoesNotExist:
             return JsonResponse({'message':'INVALID_USER'}, status=401)
     return wrapper
