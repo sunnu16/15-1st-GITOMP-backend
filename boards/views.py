@@ -6,11 +6,12 @@ from django.http      import JsonResponse,HttpResponse
 from django.views     import View
 from django.db.models import Q
 
-from users.utils      import LoginConfirm
+from users.utils      import LoginConfirm, getuser
 from users.models     import User
 from boards.models    import Board,BoardCategory,Comment
 
 class BoardView(View):
+    @getuser
     def get(self, request):
         query       = Q()
         page        = int(request.GET.get('page',1))
@@ -32,7 +33,6 @@ class BoardView(View):
             if not search_key:
                 search_key=0
             query &= search_option[int(search_key)]
-        
 
         if category is not None and category != "0":
             query &= Q(category=category)
@@ -49,22 +49,27 @@ class BoardView(View):
             "page"       : page,
             "page_count" : page_count,
             "board_count": total_boards,
-            "boards"    : [{
-                "board_id"     : board.id,
-                "title"        : board.title,
-                "author"       : board.author.nickname,
-                "category"     : board.category.name,
-                "created_at"   : board.created_at.date(),
-                "updated_at"   : board.updated_at.date(),
-                "views"	       : board.views,
-            } if board.updated_at else {
+            "boards"     : []
+            }
+        
+        for board in boards[offset:limit]:
+            option = {
                 "board_id"     : board.id,
                 "title"        : board.title,
                 "author"       : board.author.nickname,
                 "category"     : board.category.name,
                 "created_at"   : board.created_at.date(),
                 "views"	       : board.views,
-            } for board in boards[offset:limit]]}
+                "check"        : False
+            }
+            
+            if board.updated_at:
+                option["updated_at"] = board.updated_at
+            
+            if request.user:
+                if request.user.id == board.author.id:
+                    option["check"] = True
+            data["boards"].append(option)    
 
         return JsonResponse(data,status=200)
   

@@ -34,3 +34,22 @@ def LoginConfirm(original_function):
         except User.DoesNotExist:
             return JsonResponse({'message':'INVALID_USER'}, status=401)
     return wrapper
+
+def getuser(original_function):
+    def wrapper(self, request, *args, **kwargs):
+        token = request.headers.get("Authorization", None)
+        try:
+            if token:
+                token_payload = jwt.decode(token, SECRET_KEY, algorithms=JWT_ALGORITHM)
+                user          = User.objects.get(id=token_payload['id'])
+                request.user  = user
+                return original_function(self, request, *args, **kwargs)
+            
+            request.user = None
+            return original_function(self, request, *args, **kwargs)
+
+        except jwt.DecodeError:
+            return JsonResponse({'message':'INVALID_DATA'}, status=401)
+    return wrapper
+
+
