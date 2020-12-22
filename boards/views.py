@@ -12,7 +12,6 @@ from boards.models    import Board,BoardCategory,Comment
 
 class BoardView(View):
     def get(self, request):
-
         query       = Q()
         page        = int(request.GET.get('page',1))
         BOARD_COUNT = 10
@@ -27,13 +26,12 @@ class BoardView(View):
             2 : Q(description__icontains=search_string)
         }   
 	
-	
         if search_string:
             if not search_key:
                 search_key = 0
             query &= search_option[search_key]
        
-        boards = Board.objects.select_related('category').filter(query)
+        boards = Board.objects.select_related('category').filter(query).order_by('-created_at')
 	
         if not boards:
             return JsonResponse({'MESSAGE':"PAGE_NOT_FOUND"}, status=404)
@@ -49,9 +47,15 @@ class BoardView(View):
                 "board_id"     : board.id,
                 "title"        : board.title,
                 "author"       : board.author.nickname,
-                "created_at"   : board.created_at,
-                "updated_at"   : board.updated_at,
-                "views"	: board.views,
+                "created_at"   : board.created_at.date(),
+                "updated_at"   : board.updated_at.date(),
+                "views"	       : board.views,
+            } if board.updated_at else {
+                "board_id"     : board.id,
+                "title"        : board.title,
+                "author"       : board.author.nickname,
+                "created_at"   : board.created_at.date(),
+                "views"	       : board.views,
             } for board in boards[offset:limit]]}
 
         return JsonResponse(data,status=200)
@@ -81,7 +85,7 @@ class BoardDetailView(View):
             
             previous_board  = Board.objects.prefetch_related('category').filter(id__lt=board_pk).order_by('id').last()
             next_board      = Board.objects.prefetch_related('category').filter(id__gt=board.pk).order_by('id').first()
-
+ 
             data = {
                 "id"         : board.id,
                 "author"     : board.author.nickname,
@@ -89,16 +93,27 @@ class BoardDetailView(View):
                 "content"    : board.content,
                 "category"   : board.category.name,
                 "views"      : board.views,
-                "created_at" : board.created_at,
-                "updated_at" : board.updated_at,
-                "comment"    : [{
+                "created_at" : board.created_at.date(),
+            }
+
+            if board.updated_at:
+                data["updated_at"] = board.updated_at.date()
+
+            comments = [{
                     "id" : comment.id,
                     "author" : comment.author.nickname,
                     "content" : comment.content,
-                    "created_at" : comment.created_at,
-                    "updated_at" : comment.updated_at
+                    "created_at" : comment.created_at.date(),
+                    "updated_at" : comment.updated_at.date()
+                } if comment.updated_at else {
+                    "id" : comment.id,
+                    "author" : comment.author.nickname,
+                    "content" : comment.content,
+                    "created_at" : comment.created_at.date(),
                 } for comment in board.comment_set.order_by("-created_at").all()]
-            }
+            
+            if comments:
+                data["comments"] = comments
 
             if previous_board:
                 data['previous_board'] = {
