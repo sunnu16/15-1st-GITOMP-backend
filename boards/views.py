@@ -20,17 +20,23 @@ class BoardView(View):
 
         search_string = request.GET.get('search')
         search_key    = request.GET.get('search_key')
+        category      = request.GET.get('category')
+
         search_option = {
-            0 : Q(title__icontains=search_string) | Q(description__icontains=search_string),
+            0 : Q(title__icontains=search_string) | Q(content__icontains=search_string),
             1 : Q(title__icontains=search_string),
-            2 : Q(description__icontains=search_string)
+            2 : Q(content__icontains=search_string)
         }   
-	
+
         if search_string:
             if not search_key:
-                search_key = 0
-            query &= search_option[search_key]
-       
+                search_key=0
+            query &= search_option[int(search_key)]
+        
+
+        if category is not None and category != "0":
+            query &= Q(category=category)
+
         boards = Board.objects.select_related('category').filter(query).order_by('-created_at')
 	
         if not boards:
@@ -40,13 +46,14 @@ class BoardView(View):
         page_count = math.ceil(total_boards/BOARD_COUNT) 
 
         data = {
-            "page" : page,
+            "page"       : page,
             "page_count" : page_count,
-            "board_count"  : total_boards,
+            "board_count": total_boards,
             "boards"    : [{
                 "board_id"     : board.id,
                 "title"        : board.title,
                 "author"       : board.author.nickname,
+                "category"     : board.category.name,
                 "created_at"   : board.created_at.date(),
                 "updated_at"   : board.updated_at.date(),
                 "views"	       : board.views,
@@ -54,6 +61,7 @@ class BoardView(View):
                 "board_id"     : board.id,
                 "title"        : board.title,
                 "author"       : board.author.nickname,
+                "category"     : board.category.name,
                 "created_at"   : board.created_at.date(),
                 "views"	       : board.views,
             } for board in boards[offset:limit]]}
