@@ -1,5 +1,6 @@
 import json
 import datetime
+import math
 
 from django.http    import JsonResponse
 from django.views   import View
@@ -17,7 +18,8 @@ class ConcertUpcommingView(View):
         if not concerts.exists():
             return JsonResponse({"MESSAGE":"NO_UPCOMMING_CONCERTS"},status=404)
 
-        data = {[{
+        data = {
+            "concerts" : [{
             "pk" : concert.id,
             "title" : concert.title,
             "thumbnail_url" :concert.thumbnail_url
@@ -27,12 +29,10 @@ class ConcertUpcommingView(View):
         
 #콘서트필터링페이지
 class ConcertListView(View):
-    def get(self, reqeust):
-
+    def get(self, request):
         query = Q()
         filter ={}
-
-        #페이지네이션/1페이지당 10개
+        CONCERT_COUNT = 10
         page = int(request.GET.get('page',1))
         limit = CONCERT_COUNT * page
         offset = limit -CONCERT_COUNT
@@ -65,28 +65,27 @@ class ConcertListView(View):
                 serarch_key = 0
 
             query &= search_option[search_key]
-            concert = Concert.objects.select_related('location').prefetch_related('seat', 'host', 'ticketing_site').filiter(query, **filiter)
+        concerts= Concert.objects.select_related('location').prefetch_related('seat', 'host', 'ticketing_site').filter(query, **filter)
 
-            if not concert:
-                return JsonResponse({'message' : "page_not_found"}, status = 404)
+        if not concerts:
+            return JsonResponse({'message' : "page_not_found"}, status = 404)
 
-            page_count = match.cil(concerts.count()/CONCERT_COUNT)
+        page_count = math.ceil(concerts.count()/CONCERT_COUNT)
+        data = {
+            "concert" :[{
+                "id" : concert.id,
+                "title" : concert.title,
+                "location" : concert.location.name,
+                "date_performance" : concert.date_performance,
+                "post_url" : concert.post_url,
+                "seats" : [{
+                    "name" : seat.name,
+                    "price": ConcertSeat.objects.get(concert=concert.id,seat=seat.id)
+                } for seat in concert.seat.all()],
+                "date_ticketing" : concert.date_ticketing
+            }for concert in concerts[offset:limit]]}
 
-            data = {
-                "concert" :[{
-
-                    "id" : Concert.id,
-                    "title" : Concert.tilte,
-                    "location" : Concert.location,
-                    "date_performance" : Concert.date_performance,
-                    "seat" : Concert.seat,
-                    "price" : ConcertSeat.price,
-                    "post_url" : Concert.post_url,
-                    "date_ticketing" : Concert.date_ticketing
-                }for concert in concerts[offset:limit]
-                            ]}
-
-            return JsonResponse(data, status = 200)
+        return JsonResponse(data, status = 200)
 
 
 
