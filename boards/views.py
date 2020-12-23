@@ -16,12 +16,12 @@ class BoardView(View):
         query       = Q()
         page        = int(request.GET.get('page',1))
         BOARD_COUNT = 10
-        limit       = BOARD_COUNT*page
-        offset      = limit-BOARD_COUNT
+        limit       = BOARD_COUNT * page
+        offset      = limit - BOARD_COUNT
 
         search_string = request.GET.get('search')
-        search_key    = request.GET.get('search_key')
-        category      = request.GET.get('category')
+        search_key    = request.GET.get('search_key',0)
+        category      = request.GET.get('category',0)
 
         search_option = {
             0 : Q(title__icontains=search_string) | Q(content__icontains=search_string),
@@ -30,20 +30,18 @@ class BoardView(View):
         }   
 
         if search_string:
-            if not search_key:
-                search_key=0
             query &= search_option[int(search_key)]
 
-        if category is not None and category != "0":
+        if category:
             query &= Q(category=category)
 
-        boards = Board.objects.select_related('category').filter(query).order_by('-created_at')
+        boards = Board.objects.select_related('category').filter(query).order_by('-id')
 	
         if not boards:
             return JsonResponse({'MESSAGE':"PAGE_NOT_FOUND"}, status=404)
         
-        total_boards = boards.count()	
-        page_count = math.ceil(total_boards/BOARD_COUNT) 
+        total_boards = boards.count()
+        page_count   = math.ceil(total_boards/BOARD_COUNT)
 
         data = {
             "page"       : page,
@@ -53,23 +51,24 @@ class BoardView(View):
             }
         
         for board in boards[offset:limit]:
-            option = {
+            board_data = {
                 "board_id"     : board.id,
                 "title"        : board.title,
                 "author"       : board.author.nickname,
                 "category"     : board.category.name,
                 "created_at"   : board.created_at.date(),
+                "updated_at"   : None,
                 "views"	       : board.views,
                 "check"        : False
             }
             
             if board.updated_at:
-                option["updated_at"] = board.updated_at
+                board_data["updated_at"] = board.updated_at.date()
             
             if request.user:
                 if request.user.id == board.author.id:
-                    option["check"] = True
-            data["boards"].append(option)    
+                    board_data["check"] = True
+            data["boards"].append(board_data)    
 
         return JsonResponse(data,status=200)
   
@@ -96,9 +95,6 @@ class BoardDetailView(View):
             board.views += 1
             board.save()
             
-            previous_board  = Board.objects.prefetch_related('category').filter(id__lt=board_pk).order_by('id').last()
-            next_board      = Board.objects.prefetch_related('category').filter(id__gt=board.pk).order_by('id').first()
- 
             data = {
                 "id"         : board.id,
                 "author"     : board.author.nickname,
@@ -112,22 +108,25 @@ class BoardDetailView(View):
             if board.updated_at:
                 data["updated_at"] = board.updated_at.date()
 
-            comments = [{
-                    "id" : comment.id,
-                    "author" : comment.author.nickname,
-                    "content" : comment.content,
-                    "created_at" : comment.created_at.date(),
-                    "updated_at" : comment.updated_at.date()
-                } if comment.updated_at else {
-                    "id" : comment.id,
-                    "author" : comment.author.nickname,
-                    "content" : comment.content,
-                    "created_at" : comment.created_at.date(),
-                } for comment in board.comment_set.order_by("-created_at").all()]
+            comments = []
             
+            for comment in board.comment_set.order_by("-id").all():
+                comment_data = {
+                    "id" : comment.id,
+                    "author" : comment.author.nickname,
+                    "content" : comment.content,
+                    "created_at" : comment.created_at.date(),
+                    "updated_at" : None
+                }
+                if comment.updated_at:
+                    comment_data["updated"] = comment.updated_at.date()
+                    
             if comments:
                 data["comments"] = comments
-
+            
+            previous_board  = Board.objects.filter(id__lt=board.id).order_by('id').last()
+            next_board      = Board.objects.filter(id__gt=board.id).order_by('id').first()
+ 
             if previous_board:
                 data['previous_board'] = {
                     "id"      : previous_board.id,
