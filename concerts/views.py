@@ -65,6 +65,7 @@ class ConcertListView(View):
                 serarch_key = 0
 
             query &= search_option[search_key]
+
         concerts= Concert.objects.select_related('location').prefetch_related('seat', 'host', 'ticketing_site').filter(query, **filter)
 
         if not concerts:
@@ -91,25 +92,27 @@ class ConcertListView(View):
 
 #상세페이지
 class ConcertDetailView(View):
-    def get(self, reqeust, concert_pk):
+    def get(self, reqeust, concert_id):
         try:
-            concert =Concert.objects.select_related('location').prefetch_related('seat','host','ticketing_site').get(id=concert_pk)
-
-            previous_concert = Concert.objects.prefetch_related("title").filter(id__lt=concert.pk).order_by('id').first()
-            next_concert = Concert.objects.prefetch_related("title").filter(id_gt=concert.pk).order_by('id').first()
+            concert =Concert.objects.select_related('location').prefetch_related('seat','host','ticketing_site').get(id=concert_id)
+            #preious로 맞추기
+            previous_concert = Concert.objects.filter(id__lt=concert_id).order_by('id').first()
+            next_concert = Concert.objects.filter(id__gt=concert_id).order_by('id').first()
 
             data = {
                 'id' : concert.id,
                 'title' : concert.title,
                 'date_performance' : concert.date_performance,
-                'location' : [location.name for location in concert.location.all()],
+                'location' :concert.location.name,
                 'post_url' : concert.post_url,
                 'thumbnail_url' : concert.thumbnail_url,
                 'info_detail' : concert.info_detail,
+
                 'host' : [{
                     "name" : host.name,
                     "phone" : host.contact
                 } for host in concert.host.all()],
+
                 "seat" : [{
                     "seat" : seat.name,
                     "price" : ConcertSeat.objects.get(concert=concert.id,seat=seat.id).price

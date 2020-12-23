@@ -4,6 +4,6 @@ from concerts.views import ConcertUpcommingView, ConcertListView, ConcertDetailV
 urlpatterns = [
     path('/upcomming', ConcertUpcommingView.as_view()),
     path('',ConcertListView.as_view()),
-    path('/<int:concert_pk>', ConcertDetailView.as_view())
+    path('/<int:concert_id>', ConcertDetailView.as_view())
 ]
 
