@@ -34,23 +34,22 @@ class ConcertListView(View):
         
         search_list = Concert.objects.all()
 
-        year = request.GET.get('year',None)
+        year = request.GET.get('year')
         search_string = request.GET.get('search')
         search_key = request.GET.get('search_key',0)
 
         if year:
-            query = Q(date_perfomance__year = year) 
+            query = Q(date_performance__year = int(year)) 
         
         if search_string:
-            
             search_option= {                   
-                0 : (Q(info_detail__icontains = search_string) | Q(tilte__icontains = search_string)),
-                1 : Q(info_detail__icontains = search_string),
-                2 : Q(title__icontains = search_string)
+                0 : Q(info_detail__icontains = search_string) | Q(title__icontains = search_string),
+                1 : Q(title__icontains = search_string),
+                2 : Q(info_detail__icontains = search_string)
             }
 
-            query &= search_option[search_key]
-        
+            query &= search_option[int(search_key)]
+    
         #upcoming = Concert.objects.filter(date_performance__gt = datetime.datetime.now()).order_by('date_performance')
         concerts = Concert.objects.select_related('location').prefetch_related('seat', 'host', 'ticketing_site').filter(query).order_by('-date_performance')
         
