@@ -17,26 +17,26 @@ class ConcertUpcommingView(View):
 
         data = {
                 "concerts"          : [{
-                "pk"                : concert.id,
-                "title"             : concert.title,
-                "thumbnail_url"     : concert.thumbnail_url
+                    "pk"                : concert.id,
+                    "title"             : concert.title,
+                    "thumbnail_url"     : concert.thumbnail_url
             } for concert in concerts]}
         return JsonResponse(data, status=200)
         
 class ConcertListView(View):
     def get(self, request):
         
-        query = Q()
+        query         = Q()
         CONCERT_COUNT = 10
-        page = int(request.GET.get('page',1))
-        limit = CONCERT_COUNT * page
-        offset = limit -CONCERT_COUNT
+        page          = int(request.GET.get('page',1))
+        limit         = CONCERT_COUNT * page
+        offset        = limit - CONCERT_COUNT
         
-        search_list = Concert.objects.all()
+        search_list   = Concert.objects.all()
 
-        year = request.GET.get('year')
+        year          = request.GET.get('year')
         search_string = request.GET.get('search')
-        search_key = request.GET.get('search_key',0)
+        search_key    = request.GET.get('search_key',0)
 
         if year:
             query = Q(date_performance__year = int(year)) 
@@ -50,14 +50,14 @@ class ConcertListView(View):
 
             query &= search_option[int(search_key)]
     
-        #upcoming = Concert.objects.filter(date_performance__gt = datetime.datetime.now()).order_by('date_performance')
+
         concerts = Concert.objects.select_related('location').prefetch_related('seat', 'host', 'ticketing_site').filter(query).order_by('-date_performance')
         
         if not concerts:
             return JsonResponse({'message' : "PAGE_NOT_FOUND"}, status = 404)
 
-        page_count = math.ceil(concerts.count()/CONCERT_COUNT)
-    
+        page_count = math.ceil(concerts.count() / CONCERT_COUNT)
+        
         data = {
             "page"                 : page,
             "page_count"           : page_count,
@@ -86,7 +86,7 @@ class ConcertDetailView(View):
             data = {
                 'id'               : concert.id,
                 'title'            : concert.title,
-                'date_performance' : concert.date_performance,
+                'date_performance' : concert.date_performance.date(),
                 'location'         : concert.location.name,
                 'post_url'         : concert.post_url,
                 'thumbnail_url'    : concert.thumbnail_url,
@@ -102,7 +102,7 @@ class ConcertDetailView(View):
             }
             
             if concert.date_ticketing:
-                data['date_ticketing'] = concert.date_ticketing
+                data['date_ticketing'] = concert.date_ticketing.date()
 
             if previous_concert :
                 data['previous_concert'] = {
