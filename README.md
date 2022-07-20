@@ -1,5 +1,3 @@
-# 15-1st-GITOMP-backend
-김승재, 최선우
 # GITOMP
 
 ![기톰프뮤직](https://user-images.githubusercontent.com/70262871/103122910-9fe4b680-46c5-11eb-8319-5f09f694ea7e.jpg)
