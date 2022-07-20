@@ -5,7 +5,7 @@
 - **Team_name** : GITOMP
 - **Team_member** : 김규빈(Team Leader), 김승재 , 문병곤 , 박소윤 , 최선우
 - **Project_development \_period** : 2020년 12월 15일 ~ 2020년 12월 24일
-- **Backend_github** : **[GITOMP-Backend](https://github.com/wecode-bootcamp-korea/15-1st-GITOMP-backend)**
+- **Front-end_github** : **[GITOMP-Backend](https://github.com/wecode-bootcamp-korea/15-1st-GITOMP-frontend)**
 
 ## Project_info
 
